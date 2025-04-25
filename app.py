@@ -84,9 +84,9 @@ if st.button("🚀 Predict Sales"):
 
 st.sidebar.header("Model Details")
 st.sidebar.markdown("""
-- **Model Type**: Gradient Boosting
-- **Training R²**: 0.52
-- **Features**: 9 total
+- **Model Type**: Gradient Boost
+- **Training R²**: 0.50
+- **Features**: 10 total
 - **Best Predictors**: publisherClass_AAA, workshop_support
 """)
 
