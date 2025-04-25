@@ -5,8 +5,10 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 # Load model and scaler
+# Load the trained model
+scaler_X = joblib.load('scaler_X.pkl')  # for input features
+scaler_y = joblib.load('scaler_y.pkl')  # for reversing prediction
 model = joblib.load('steam_sales_model.pkl')
-
 # Initialize scaler (you should save this during training)
 scaler = StandardScaler()
 
