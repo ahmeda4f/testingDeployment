@@ -8,7 +8,7 @@ try:
     model = joblib.load('steam_sales_model.pkl')
     scaler_X = joblib.load('scaler_X.pkl')  # For input features
     scaler_y = joblib.load('scaler_y.pkl')  # For target variable
-    feature_names = joblib.load('feature_names.pkl')  # Load feature names used during training
+    feature_names = joblib.load('feature_names.pkl')  # Load feature names from training
 except Exception as e:
     st.error(f"Failed to load model files: {str(e)}")
     st.stop()
@@ -56,14 +56,14 @@ def prepare_input():
         'price': [price]  # Last column to match your data
     })
 
-    # Reorder the columns based on the feature names used in training
+    # Reorder the columns based on the feature names from training
     input_df = input_df[feature_names]
     return input_df
 
 def predict_sales(input_df):
     """Make prediction ensuring proper feature order and scaling"""
     try:
-        # 1. Scale only the numeric features (price, reviewScore)
+        # 1. Scale only the numeric features (reviewScore, price)
         numeric_features = ['reviewScore', 'price']
         input_df[numeric_features] = scaler_X.transform(input_df[numeric_features])
         
@@ -73,8 +73,6 @@ def predict_sales(input_df):
         return prediction[0][0]  # Return single prediction
     except Exception as e:
         st.error(f"Prediction error: {str(e)}")
-        st.write("Current features:", input_df.columns.tolist())
-        st.write("Expected features:", feature_names)
         return None
 
 # Prediction Button
@@ -101,32 +99,6 @@ if st.button("🚀 Predict Sales"):
             - Steam Trading Cards
             - Workshop Support
             """)
-
-# Sample Presets
-st.sidebar.header("Quick Presets")
-if st.sidebar.button("Indie Game Example"):
-    st.session_state.price = 14.99
-    st.session_state.review_score = 80
-    st.session_state.publisher_class = "Indie"
-    st.session_state.workshop = True
-    st.session_state.trading_cards = False
-    st.rerun()
-
-if st.sidebar.button("AA Studio Example"):
-    st.session_state.price = 29.99
-    st.session_state.review_score = 75
-    st.session_state.publisher_class = "AA Studio"
-    st.session_state.workshop = False
-    st.session_state.trading_cards = True
-    st.rerun()
-
-if st.sidebar.button("AAA Blockbuster Example"):
-    st.session_state.price = 59.99
-    st.session_state.review_score = 85
-    st.session_state.publisher_class = "AAA Studio"
-    st.session_state.workshop = True
-    st.session_state.trading_cards = True
-    st.rerun()
 
 # Model Info
 st.sidebar.header("Model Information")
