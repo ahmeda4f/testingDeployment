@@ -3,27 +3,15 @@ import pandas as pd
 import joblib
 import numpy as np
 
-# Load the trained model and scalers
+# Load the trained model, scalers, and feature names
 try:
     model = joblib.load('steam_sales_model.pkl')
     scaler_X = joblib.load('scaler_X.pkl')  # For input features
     scaler_y = joblib.load('scaler_y.pkl')  # For target variable
+    feature_names = joblib.load('feature_names.pkl')  # Load feature names used during training
 except Exception as e:
     st.error(f"Failed to load model files: {str(e)}")
     st.stop()
-
-# Define the EXACT feature order from your data sample
-FEATURE_ORDER = [
-    'publisherClass_AAA',
-    'workshop_support',
-    'steam_trading_cards',
-    'publisherClass_AA',
-    'Action',
-    'Others',
-    'reviewScore',
-    'support_all_platforms',
-    'price'  # Correctly positioned as last column
-]
 
 # Streamlit UI Configuration
 st.set_page_config(page_title="Steam Sales Predictor", layout="wide", page_icon="🎮")
@@ -56,7 +44,7 @@ with st.expander("➕ More Options"):
 
 def prepare_input():
     """Prepare input data matching your dataset's column order"""
-    return pd.DataFrame({
+    input_df = pd.DataFrame({
         'publisherClass_AAA': [1 if publisher_class == "AAA Studio" else 0],
         'workshop_support': [1 if workshop else 0],
         'steam_trading_cards': [1 if trading_cards else 0],
@@ -68,24 +56,25 @@ def prepare_input():
         'price': [price]  # Last column to match your data
     })
 
+    # Reorder the columns based on the feature names used in training
+    input_df = input_df[feature_names]
+    return input_df
+
 def predict_sales(input_df):
     """Make prediction ensuring proper feature order and scaling"""
     try:
-        # 1. Ensure correct column order (column names in the same order as the model expects)
-        input_df = input_df[FEATURE_ORDER]
-        
-        # 2. Scale only the numeric features (price, reviewScore)
+        # 1. Scale only the numeric features (price, reviewScore)
         numeric_features = ['reviewScore', 'price']
         input_df[numeric_features] = scaler_X.transform(input_df[numeric_features])
         
-        # 3. Predict and inverse transform
+        # 2. Predict and inverse transform
         prediction_scaled = model.predict(input_df)  # Model gives scaled predictions
         prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))  # Inverse transform
         return prediction[0][0]  # Return single prediction
     except Exception as e:
         st.error(f"Prediction error: {str(e)}")
         st.write("Current features:", input_df.columns.tolist())
-        st.write("Expected features:", FEATURE_ORDER)
+        st.write("Expected features:", feature_names)
         return None
 
 # Prediction Button
