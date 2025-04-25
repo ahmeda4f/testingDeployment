@@ -92,16 +92,39 @@ if st.button("🚀 Predict Sales"):
     if prediction is not None:
         st.success(f"## Predicted Sales: {int(prediction):,} copies")
         
-        # Show feature importance
-        st.subheader("Top Influencing Factors")
-        st.markdown(""" 
-        1. Review Score (35%) 
-        2. Price (25%) 
-        3. AAA Publisher Status (15%) 
-        4. Steam Trading Cards (10%) 
-        5. Workshop Support (8%) 
-        """)
+       # Show feature importance
+st.subheader("Top Influencing Factors")
+st.markdown("""
+**Game Success Drivers:**  
+Here's what impacts sales the most based on our analysis:
 
+1. **AAA Publisher Status** - 17.8%  
+   Being published by a major studio gives the biggest boost
+
+2. **Workshop Support** - 11.1%  
+   Modding capabilities significantly increase engagement
+
+3. **Steam Trading Cards** - 10.4%  
+   Collectible items provide noticeable lift
+
+4. **AA Publisher Status** - 6.0%  
+   Mid-sized studios still have an advantage over indies
+
+5. **Action Genre** - 3.5%  
+   Action games perform slightly better than average
+
+6. **Other Genres** - 2.5%  
+   Niche genres have smaller but measurable impact
+
+7. **Review Score** - 2.3%  
+   Quality matters, but less than publisher factors
+
+8. **Multiplatform Support** - 2.2%  
+   Supporting all platforms helps reach wider audience
+
+9. **Price Point** - 1.6%  
+   Pricing has surprisingly small direct impact
+""")
 
 
 # Model Info
