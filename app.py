@@ -1,16 +1,25 @@
 import streamlit as st
 import pandas as pd
 import joblib
-from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-# Load model and scaler
-# Load the trained model
-scaler_X = joblib.load('scaler_X.pkl')  # for input features
-scaler_y = joblib.load('scaler_y.pkl')  # for reversing prediction
+# Load model and scalers
 model = joblib.load('steam_sales_model.pkl')
-# Initialize scaler (you should save this during training)
-scaler = StandardScaler()
+scaler_X = joblib.load('scaler_X.pkl')
+scaler_y = joblib.load('scaler_y.pkl')
+
+# Get the feature names the model expects (from training)
+feature_names = [
+    'price',
+    'reviewScore',
+    'publisherClass_AAA',
+    'publisherClass_AA',
+    'workshop_support',
+    'steam_trading_cards',
+    'Action',
+    'Others',
+    'support_all_platforms'
+]
 
 # UI Setup
 st.set_page_config(page_title="Steam Sales Predictor", layout="wide", page_icon="🎮")
@@ -45,53 +54,54 @@ with st.expander("➕ More Options"):
 
 # Prediction Function
 def predict_sales(input_data):
+    # Ensure correct column order and names
+    input_data = input_data.reindex(columns=feature_names)
+    
     # Scale only the numeric features
     input_data[['price', 'reviewScore']] = scaler_X.transform(input_data[['price', 'reviewScore']])
-
-    # Reindex columns to match training
-    input_data = input_data.reindex(columns=feature_names, fill_value=0)
-
+    
     # Predict and inverse scale
     prediction_scaled = model.predict(input_data)
     prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
-
-    return prediction
-
+    
+    return prediction[0][0]  # Return single value
 
 # Prediction Button
 if st.button("🚀 Predict Sales"):
-    # Prepare input data
+    # Prepare input data with EXACT feature names
     input_df = pd.DataFrame({
         'price': [price],
         'reviewScore': [review_score],
         'publisherClass_AAA': [1 if publisher_class == "AAA Studio" else 0],
         'publisherClass_AA': [1 if publisher_class == "AA Studio" else 0],
         'workshop_support': [int(workshop)],
-        'steam_trading_cards': [int(trading_cards)],
+        'steam_trading_cards': [int(trading_cards)],  # Note: matches feature_names spelling
         'Action': [int(action)],
         'Others': [int(other_genre)],
         'support_all_platforms': [int(all_platforms)]
     })
     
     # Debug: Show raw input
-    st.write("Raw Input Data:", input_df)
+    st.write("Input Data Before Processing:", input_df)
     
     try:
         prediction = predict_sales(input_df)
-        st.success(f"## Predicted Sales: {int(prediction[0]):,} copies")
+        st.success(f"## Predicted Sales: {int(prediction):,} copies")
         
-        # Show feature importance (example values - replace with your model's)
+        # Show feature importance
         st.subheader("Top Influencing Factors")
         st.markdown("""
-        1. Review Score (35%)
-        2. Price (25%)
-        3. AAA Publisher Status (15%)
-        4. Steam Trading Cards (10%)
-        5. Workshop Support (8%)
+        1. Review Score
+        2. Price
+        3. AAA Publisher Status
+        4. Steam Trading Cards
+        5. Workshop Support
         """)
         
     except Exception as e:
         st.error(f"Prediction failed: {str(e)}")
+        st.write("Current input DataFrame columns:", input_df.columns.tolist())
+        st.write("Expected feature names:", feature_names)
 
 # Sample Presets
 st.sidebar.header("Quick Presets")
@@ -110,12 +120,3 @@ if st.sidebar.button("AAA Game Example"):
     st.session_state.workshop = True
     st.session_state.trading_cards = True
     st.rerun()
-
-# Model Info
-st.sidebar.header("Model Details")
-st.sidebar.markdown("""
-- **Model Type**: Gradient Boosting
-- **Training R²**: 0.85
-- **Features**: 9 total
-- **Best Predictors**: Review score, price
-""")
