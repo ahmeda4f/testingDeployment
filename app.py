@@ -43,7 +43,6 @@ with st.expander("➕ More Options"):
 
 # Prediction Function
 def predict_sales(input_data):
-    # Ensure correct feature order (MUST match training order)
     features_ordered = [
         'price',
         'reviewScore',
@@ -55,15 +54,20 @@ def predict_sales(input_data):
         'Others',
         'support_all_platforms'
     ]
-    
-    # Scale numerical features (price and reviewScore)
-    input_data[['price', 'reviewScore']] = scaler.fit_transform(input_data[['price', 'reviewScore']])
-    
-    # Reorder columns to match training
+
+    # Ensure correct column order
     input_data = input_data[features_ordered]
-    
-    # Predict
-    return model.predict(input_data)
+
+    # Scale numerical features only
+    input_data[['price', 'reviewScore']] = scaler_X.transform(input_data[['price', 'reviewScore']])
+
+    # Predict (gives scaled prediction)
+    prediction_scaled = model.predict(input_data)
+
+    # Inverse transform the prediction to get real units (copies sold)
+    prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
+
+    return prediction
 
 # Prediction Button
 if st.button("🚀 Predict Sales"):
