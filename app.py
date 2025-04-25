@@ -4,13 +4,11 @@ import joblib
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-# Load model and scaler
-# Load the trained model
-# Load model, scalers, and expected features
+# Load model and scalers
 model = joblib.load('steam_sales_model.pkl')
 scaler_X = joblib.load('scaler_X.pkl')
 scaler_y = joblib.load('scaler_y.pkl')
-feature_names = joblib.load('feature_names.pkl')  # This is new
+feature_names = joblib.load('feature_names.pkl')
 
 # UI Setup
 st.set_page_config(page_title="Steam Sales Predictor", layout="wide", page_icon="🎮")
@@ -45,21 +43,25 @@ with st.expander("➕ More Options"):
 
 # Prediction Function
 def predict_sales(input_df):
-    # Scale the numeric features
-    input_scaled = scaler_X.transform(input_df)
+    try:
+        # Ensure the input has all expected features in correct order
+        input_df = input_df.reindex(columns=feature_names, fill_value=0)
+        
+        # Scale the features
+        input_scaled = scaler_X.transform(input_df)
+        
+        # Make prediction
+        prediction_scaled = model.predict(input_scaled)
+        
+        # Inverse transform the prediction
+        prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
+        
+        return prediction[0][0]  # Return single prediction value
+    except Exception as e:
+        st.error(f"Error in prediction: {str(e)}")
+        return None
 
-    # Reindex columns to match the training set
-    input_data = pd.DataFrame(input_scaled, columns=feature_names).reindex(columns=feature_names, fill_value=0)
-
-    # Make the prediction
-    prediction_scaled = model.predict(input_data)
-
-    # Inverse scale the prediction to get actual sales values
-    prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
-
-    return prediction
-
-# Prepare input data when the button is clicked
+# Prediction Button
 if st.button("🚀 Predict Sales"):
     # Prepare input data
     input_df = pd.DataFrame({
@@ -74,16 +76,26 @@ if st.button("🚀 Predict Sales"):
         'support_all_platforms': [int(all_platforms)]
     })
     
-    # Debug: Show raw input
-    st.write("Raw Input Data:", input_df)
+    # Debug info
+    st.write("Input DataFrame Columns:", input_df.columns.tolist())
+    st.write("Expected Feature Names:", feature_names)
     
-    # Call prediction function
+    # Ensure all expected features are present
+    missing_features = set(feature_names) - set(input_df.columns)
+    if missing_features:
+        st.warning(f"Missing features: {missing_features}")
+        for feature in missing_features:
+            input_df[feature] = 0  # Add missing features with default value
+    
+    # Reorder columns to match expected feature order
+    input_df = input_df[feature_names]
+    
     prediction = predict_sales(input_df)
     
     if prediction is not None:
-        st.success(f"## Predicted Sales: {int(prediction[0][0]):,} copies")
+        st.success(f"## Predicted Sales: {int(prediction):,} copies")
         
-        # Show feature importance (example values - replace with your model's)
+        # Show feature importance
         st.subheader("Top Influencing Factors")
         st.markdown(""" 
         1. Review Score (35%) 
@@ -119,3 +131,8 @@ st.sidebar.markdown("""
 - **Features**: 9 total
 - **Best Predictors**: Review score, price
 """)
+
+# Debug information
+if st.sidebar.checkbox("Show debug info"):
+    st.sidebar.write("Feature names:", feature_names)
+    st.sidebar.write("Model features:", model.feature_names_in_)
