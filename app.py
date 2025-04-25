@@ -113,7 +113,8 @@ st.sidebar.markdown("""
 - **Model Type**: Gradient Boosting
 - **Training R²**: 0.52
 - **Features**: 9 total
-- **Best Predictors**:publisherClass_AAA,workshop_support
+- **Best Predictors**:
+ publisherClass_AAA,workshop_support
 """)
 
 # Debug information
