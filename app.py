@@ -71,16 +71,17 @@ def prepare_input():
 def predict_sales(input_df):
     """Make prediction ensuring proper feature order and scaling"""
     try:
-        # 1. Ensure correct column order
+        # 1. Ensure correct column order (column names in the same order as the model expects)
         input_df = input_df[FEATURE_ORDER]
         
-        # 2. Scale only the numeric features
+        # 2. Scale only the numeric features (price, reviewScore)
         numeric_features = ['reviewScore', 'price']
         input_df[numeric_features] = scaler_X.transform(input_df[numeric_features])
         
         # 3. Predict and inverse transform
-        prediction = model.predict(input_df)
-        return scaler_y.inverse_transform(prediction.reshape(-1, 1))[0][0]
+        prediction_scaled = model.predict(input_df)  # Model gives scaled predictions
+        prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))  # Inverse transform
+        return prediction[0][0]  # Return single prediction
     except Exception as e:
         st.error(f"Prediction error: {str(e)}")
         st.write("Current features:", input_df.columns.tolist())
