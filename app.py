@@ -3,28 +3,30 @@ import pandas as pd
 import joblib
 import numpy as np
 
-# Load model and scalers
-model = joblib.load('steam_sales_model.pkl')
-scaler_X = joblib.load('scaler_X.pkl')
-scaler_y = joblib.load('scaler_y.pkl')
+# Load the trained model and scalers
+try:
+    model = joblib.load('steam_sales_model.pkl')
+    scaler_X = joblib.load('scaler_X.pkl')  # For input features
+    scaler_y = joblib.load('scaler_y.pkl')  # For target variable
+except Exception as e:
+    st.error(f"Failed to load model files: {str(e)}")
+    st.stop()
 
-# Get the feature names the model expects (from training)
-feature_names = [
-    'price',
-    'reviewScore',
+# Define the EXACT feature order from your data sample
+FEATURE_ORDER = [
     'publisherClass_AAA',
-    'publisherClass_AA',
     'workshop_support',
     'steam_trading_cards',
+    'publisherClass_AA',
     'Action',
     'Others',
-    'support_all_platforms'
+    'reviewScore',
+    'support_all_platforms',
+    'price'  # Correctly positioned as last column
 ]
 
-# UI Setup
+# Streamlit UI Configuration
 st.set_page_config(page_title="Steam Sales Predictor", layout="wide", page_icon="🎮")
-
-# Title
 st.title("🎮 Steam Game Sales Predictor")
 
 # Input Section
@@ -47,61 +49,68 @@ with col2:
 with st.expander("➕ More Options"):
     st.header("🎮 Genres")
     action = st.checkbox("Action Genre")
-    other_genre = st.checkbox("Other Genre")
+    other_genre = st.checkbox("Other Genre (Not Indie/Adventure/Casual/Strategy)")
     
     st.header("🖥️ Platforms")
-    all_platforms = st.checkbox("Supports All Platforms")
+    all_platforms = st.checkbox("Supports All Platforms (Windows, Mac, Linux)")
 
-# Prediction Function
-def predict_sales(input_data):
-    # Ensure correct column order and names
-    input_data = input_data.reindex(columns=feature_names)
-    
-    # Scale only the numeric features
-    input_data[['price', 'reviewScore']] = scaler_X.transform(input_data[['price', 'reviewScore']])
-    
-    # Predict and inverse scale
-    prediction_scaled = model.predict(input_data)
-    prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
-    
-    return prediction[0][0]  # Return single value
+def prepare_input():
+    """Prepare input data matching your dataset's column order"""
+    return pd.DataFrame({
+        'publisherClass_AAA': [1 if publisher_class == "AAA Studio" else 0],
+        'workshop_support': [1 if workshop else 0],
+        'steam_trading_cards': [1 if trading_cards else 0],
+        'publisherClass_AA': [1 if publisher_class == "AA Studio" else 0],
+        'Action': [1 if action else 0],
+        'Others': [1 if other_genre else 0],
+        'reviewScore': [review_score],
+        'support_all_platforms': [1 if all_platforms else 0],
+        'price': [price]  # Last column to match your data
+    })
+
+def predict_sales(input_df):
+    """Make prediction ensuring proper feature order and scaling"""
+    try:
+        # 1. Ensure correct column order
+        input_df = input_df[FEATURE_ORDER]
+        
+        # 2. Scale only the numeric features
+        numeric_features = ['reviewScore', 'price']
+        input_df[numeric_features] = scaler_X.transform(input_df[numeric_features])
+        
+        # 3. Predict and inverse transform
+        prediction = model.predict(input_df)
+        return scaler_y.inverse_transform(prediction.reshape(-1, 1))[0][0]
+    except Exception as e:
+        st.error(f"Prediction error: {str(e)}")
+        st.write("Current features:", input_df.columns.tolist())
+        st.write("Expected features:", FEATURE_ORDER)
+        return None
 
 # Prediction Button
 if st.button("🚀 Predict Sales"):
-    # Prepare input data with EXACT feature names
-    input_df = pd.DataFrame({
-        'price': [price],
-        'reviewScore': [review_score],
-        'publisherClass_AAA': [1 if publisher_class == "AAA Studio" else 0],
-        'publisherClass_AA': [1 if publisher_class == "AA Studio" else 0],
-        'workshop_support': [int(workshop)],
-        'steam_trading_cards': [int(trading_cards)],  # Note: matches feature_names spelling
-        'Action': [int(action)],
-        'Others': [int(other_genre)],
-        'support_all_platforms': [int(all_platforms)]
-    })
-    
-    # Debug: Show raw input
-    st.write("Input Data Before Processing:", input_df)
-    
-    try:
+    with st.spinner('Making prediction...'):
+        # Prepare input data
+        input_df = prepare_input()
+        
+        # Debug view
+        st.write("Input Data Preview:", input_df)
+        
+        # Make prediction
         prediction = predict_sales(input_df)
-        st.success(f"## Predicted Sales: {int(prediction):,} copies")
         
-        # Show feature importance
-        st.subheader("Top Influencing Factors")
-        st.markdown("""
-        1. Review Score
-        2. Price
-        3. AAA Publisher Status
-        4. Steam Trading Cards
-        5. Workshop Support
-        """)
-        
-    except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
-        st.write("Current input DataFrame columns:", input_df.columns.tolist())
-        st.write("Expected feature names:", feature_names)
+        if prediction is not None:
+            st.success(f"## Predicted Sales: {int(prediction):,} copies")
+            
+            # Show feature importance
+            st.subheader("Key Factors Affecting Sales")
+            st.markdown("""
+            - Review Score (most important)
+            - Price
+            - Publisher Type (AAA/AA/Indie)
+            - Steam Trading Cards
+            - Workshop Support
+            """)
 
 # Sample Presets
 st.sidebar.header("Quick Presets")
@@ -113,10 +122,30 @@ if st.sidebar.button("Indie Game Example"):
     st.session_state.trading_cards = False
     st.rerun()
 
-if st.sidebar.button("AAA Game Example"):
+if st.sidebar.button("AA Studio Example"):
+    st.session_state.price = 29.99
+    st.session_state.review_score = 75
+    st.session_state.publisher_class = "AA Studio"
+    st.session_state.workshop = False
+    st.session_state.trading_cards = True
+    st.rerun()
+
+if st.sidebar.button("AAA Blockbuster Example"):
     st.session_state.price = 59.99
     st.session_state.review_score = 85
     st.session_state.publisher_class = "AAA Studio"
     st.session_state.workshop = True
     st.session_state.trading_cards = True
     st.rerun()
+
+# Model Info
+st.sidebar.header("Model Information")
+st.sidebar.markdown("""
+- **Model Type**: Gradient Boosting Regressor
+- **Trained On**: Steam game sales data
+- **Key Features**: 
+  - Price (last column)
+  - Review Score
+  - Publisher Class
+  - Game Features
+""")
