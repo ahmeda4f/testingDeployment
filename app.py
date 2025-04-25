@@ -12,9 +12,6 @@ scaler_X = joblib.load('scaler_X.pkl')
 scaler_y = joblib.load('scaler_y.pkl')
 feature_names = joblib.load('feature_names.pkl')  # This is new
 
-# Initialize scaler (you should save this during training)
-scaler = StandardScaler()
-
 # UI Setup
 st.set_page_config(page_title="Steam Sales Predictor", layout="wide", page_icon="🎮")
 
@@ -45,20 +42,29 @@ with st.expander("➕ More Options"):
     
     st.header("🖥️ Platforms")
     all_platforms = st.checkbox("Supports All Platforms")
+
+# Prediction Function
 def predict_sales(input_data):
-    # Scale only the numeric features
-    input_df= scaler_X.transform(input_df)
+    try:
+        # Only scale the numeric features
+        input_df= scaler_X.transform(input_df)
 
-    # Reindex columns to match training
-    input_data = input_data.reindex(columns=feature_names, fill_value=0)
 
-    # Predict and inverse scale
-    prediction_scaled = model.predict(input_data)
-    prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
+        # Reindex columns to match the training set
+        input_data = input_data.reindex(columns=feature_names, fill_value=0)
 
-    return prediction
+        # Make the prediction
+        prediction_scaled = model.predict(input_data)
 
-# Prediction Button
+        # Inverse scale the prediction to get actual sales values
+        prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
+
+        return prediction
+    except Exception as e:
+        st.error(f"Prediction failed: {str(e)}")
+        return None
+
+# Prepare input data when the button is clicked
 if st.button("🚀 Predict Sales"):
     # Prepare input data
     input_df = pd.DataFrame({
@@ -76,22 +82,21 @@ if st.button("🚀 Predict Sales"):
     # Debug: Show raw input
     st.write("Raw Input Data:", input_df)
     
-    try:
-        prediction = predict_sales(input_df)
-        st.success(f"## Predicted Sales: {int(prediction[0]):,} copies")
+    # Call prediction function
+    prediction = predict_sales(input_df)
+    
+    if prediction is not None:
+        st.success(f"## Predicted Sales: {int(prediction[0][0]):,} copies")
         
         # Show feature importance (example values - replace with your model's)
         st.subheader("Top Influencing Factors")
-        st.markdown("""
-        1. Review Score (35%)
-        2. Price (25%)
-        3. AAA Publisher Status (15%)
-        4. Steam Trading Cards (10%)
-        5. Workshop Support (8%)
+        st.markdown(""" 
+        1. Review Score (35%) 
+        2. Price (25%) 
+        3. AAA Publisher Status (15%) 
+        4. Steam Trading Cards (10%) 
+        5. Workshop Support (8%) 
         """)
-        
-    except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
 
 # Sample Presets
 st.sidebar.header("Quick Presets")
