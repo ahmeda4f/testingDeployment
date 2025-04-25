@@ -44,25 +44,20 @@ with st.expander("➕ More Options"):
     all_platforms = st.checkbox("Supports All Platforms")
 
 # Prediction Function
-def predict_sales(input_data):
-    try:
-        # Only scale the numeric features
-        input_df= scaler_X.transform(input_df)
+def predict_sales(input_df):
+    # Scale the numeric features
+    input_scaled = scaler_X.transform(input_df)
 
+    # Reindex columns to match the training set
+    input_data = pd.DataFrame(input_scaled, columns=feature_names).reindex(columns=feature_names, fill_value=0)
 
-        # Reindex columns to match the training set
-        input_data = input_data.reindex(columns=feature_names, fill_value=0)
+    # Make the prediction
+    prediction_scaled = model.predict(input_data)
 
-        # Make the prediction
-        prediction_scaled = model.predict(input_data)
+    # Inverse scale the prediction to get actual sales values
+    prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
 
-        # Inverse scale the prediction to get actual sales values
-        prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1))
-
-        return prediction
-    except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
-        return None
+    return prediction
 
 # Prepare input data when the button is clicked
 if st.button("🚀 Predict Sales"):
