@@ -76,10 +76,7 @@ if st.button("🚀 Predict Sales"):
         'support_all_platforms': [int(all_platforms)]
     })
     
-    # Debug info
-    st.write("Input DataFrame Columns:", input_df.columns.tolist())
-    st.write("Expected Feature Names:", feature_names)
-    
+  
     # Ensure all expected features are present
     missing_features = set(feature_names) - set(input_df.columns)
     if missing_features:
