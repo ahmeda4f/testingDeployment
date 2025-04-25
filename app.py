@@ -75,21 +75,13 @@ if st.button("🚀 Predict Sales"):
 2. **Workshop Support** - 11.1%  
 3. **Steam Trading Cards** - 10.4%  
 4. **AA Publisher Status** - 6.0%  
-5. **Action Genre** - 3.5%  
-6. **Other Genres** - 2.5%  
-7. **Review Score** - 2.3%  
-8. **Multiplatform Support** - 2.2%  
-9. **Price** - 1.6%  
+5. **Action Genre** - 3.5%   
 """)
 
 st.sidebar.header("Model Details")
 st.sidebar.markdown("""
-- **Model Type**: Gradient Boost
+- **Model Type**: Gradient Boosting
 - **Training R²**: 0.50
 - **Features**: 10 total
 - **Best Predictors**: publisherClass_AAA, workshop_support
 """)
-
-if st.sidebar.checkbox("Show debug info"):
-    st.sidebar.write("Feature names:", feature_names)
-    st.sidebar.write("Model features:", model.feature_names_in_)
