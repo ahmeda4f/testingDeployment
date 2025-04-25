@@ -122,7 +122,7 @@ Here's what impacts sales the most based on our analysis:
 8. **Multiplatform Support** - 2.2%  
    Supporting all platforms helps reach wider audience
 
-9. **Price Point** - 1.6%  
+9. **Price ** - 1.6%  
    Pricing has surprisingly small direct impact
 """)
 
