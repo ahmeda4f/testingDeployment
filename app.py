@@ -105,31 +105,15 @@ if st.button("🚀 Predict Sales"):
         5. Workshop Support (8%) 
         """)
 
-# Sample Presets
-st.sidebar.header("Quick Presets")
-if st.sidebar.button("Indie Game Example"):
-    st.session_state.price = 14.99
-    st.session_state.review_score = 80
-    st.session_state.publisher_class = "Indie"
-    st.session_state.workshop = True
-    st.session_state.trading_cards = False
-    st.rerun()
 
-if st.sidebar.button("AAA Game Example"):
-    st.session_state.price = 59.99
-    st.session_state.review_score = 85
-    st.session_state.publisher_class = "AAA Studio"
-    st.session_state.workshop = True
-    st.session_state.trading_cards = True
-    st.rerun()
 
 # Model Info
 st.sidebar.header("Model Details")
 st.sidebar.markdown("""
 - **Model Type**: Gradient Boosting
-- **Training R²**: 0.85
+- **Training R²**: 0.52
 - **Features**: 9 total
-- **Best Predictors**: Review score, price
+- **Best Predictors**:publisherClass_AAA,workshop_support
 """)
 
 # Debug information
