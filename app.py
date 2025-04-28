@@ -20,17 +20,19 @@ with col1:
 
 with col2:
     st.header("🏢 Publisher Class")
-    publisher_class = st.radio("Publisher Type:", ["Indie", "AA Studio", "AAA Studio"], index=0)
+    publisher_class = st.radio("Publisher Type:", ["Indie", "AA Studio", "AAA Studio"], index=1)
+    
     st.header("🛠️ Features")
-    workshop = st.checkbox("Workshop Support")
-    trading_cards = st.checkbox("Steam Trading Cards")
+    workshop = st.checkbox("Workshop Support", value=True)
+    trading_cards = st.checkbox("Steam Trading Cards", value=True)
 
-with st.expander("➕ More Options"):
+with st.expander("➕ More Options", expanded=False):
     st.header("🎮 Genres")
-    action = st.checkbox("Action Genre")
-    other_genre = st.checkbox("Other Genre")
+    action = st.checkbox("Action Genre", value=True)
+    other_genre = st.checkbox("Other Genre", value=False)
+
     st.header("🖥️ Platforms")
-    all_platforms = st.checkbox("Supports All Platforms")
+    all_platforms = st.checkbox("Supports All Platforms", value=True)
 
 def predict_sales(input_df):
     try:
@@ -62,6 +64,7 @@ if st.button("🚀 Predict Sales"):
             input_df[feature] = 0
     
     input_df = input_df[feature_names]
+    
     prediction = predict_sales(input_df)
     
     if prediction is not None:
